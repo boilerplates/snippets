@@ -87,10 +87,4 @@ snippets.set({
 // snippets.load(snip('extended.js'));
 
 
-// console.log(snippets.expand('zf-head', {prettify: true}));
 console.log(snippets.expand('div>(header>ul>li*2>a)+footer>p>'));
-
-
-var re = /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
-
-console.log('a/b/c/d/e/f/ghi.js'.match(re))
