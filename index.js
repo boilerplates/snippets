@@ -7,36 +7,43 @@ var resources = require('emmet/lib/assets/resources');
 var parser = require('emmet/lib/parser/abbreviation');
 var _ = require('lodash');
 
-var snippets = function(name) {
-  return require(path.resolve('lib', name));
-};
-
-var foundation = snippets('foundation.js');
-var extended = snippets('extended.js');
-
-emmet.loadSnippets(snippets('foundation.js'));
-emmet.loadSnippets(snippets('extended.js'));
 
 
-var snippets = function (argument) {
-  // body...
+function Snippets(cache) {
+  this.cache = cache || {};
 }
 
+Snippets.prototype.set = function(key, value) {
+  if (typeof key === 'object') {
+    this.cache = _.extend({}, this.cache, key);
+  } else {
+    this.cache[key] = value;
+  }
+  emmet.loadSnippets(this.cache);
+  return this;
+};
 
-snippets.expand = function(abbr, options) {
-  var opts = _.extend({profile: 'plain'}, options);
+Snippets.prototype.get = function(key) {
+  if (!key) {
+    return this.cache;
+  }
+  return this.cache[key];
+};
 
-  var html = tabStops.processText(parser.expand(abbr, opts), {
-    escape: function(ch) {
-      return ch;
-    },
-    tabstop: function(data) {
-      console.log(arguments)
-      return data.placeholder || '';
-    }
-  });
 
-  return prettify(html, {
+Snippets.prototype.expand = function(abbr, options) {
+  var opts = _.extend({profile: 'plain', pretty: true}, options);
+
+
+  var html = tabStops.processText(parser.expand(abbr, opts));
+  if (opts.pretty) {
+    return this.prettify(html, opts);
+  }
+  return html;
+};
+
+Snippets.prototype.prettify = function(html, options) {
+  return prettify(html, _.extend({
     indent_handlebars: true,
     indent_inner_html: true,
     preserve_newlines: false,
@@ -44,10 +51,46 @@ snippets.expand = function(abbr, options) {
     brace_style: 'expand',
     indent_char: ' ',
     indent_size: 2,
-  });
+  }, options));
 };
 
-module.exports = snippets;
+module.exports = Snippets;
 
 
-console.log(snippets.expand('zf-head'));
+var snip = function(name) {
+  return require(path.resolve('lib', name));
+};
+
+var snippets = new Snippets();
+snippets.set({
+  'html': {
+    'abbreviations': {
+      'jq': '<scr' + 'ipt type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></scr' + 'ipt>',
+      'demo': '<div id="demo"></div>',
+      'nav': 'ul.nav>li*>a',
+      'al': '<a !href="http://|">',
+      'f1|f2': '<demo>'
+    },
+    'snippets': {
+      "for": "for (var ${class} = 0; ${class} < ${id}.length; ${class}++) {\n\s|}",
+      'dol': '\\$db->connect()\n\s\\$\\$\\$more dollaz$',
+      'erb': '<%= |${child} %>'
+    }
+  },
+  'xml': {
+    'abbreviations': {
+      'use': '<use xlink:href=""/>'
+    }
+  }
+});
+// snippets.load(snip('foundation.js'));
+// snippets.load(snip('extended.js'));
+
+
+// console.log(snippets.expand('zf-head', {prettify: true}));
+console.log(snippets.expand('div>(header>ul>li*2>a)+footer>p>'));
+
+
+var re = /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+
+console.log('a/b/c/d/e/f/ghi.js'.match(re))
